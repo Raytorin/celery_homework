@@ -1,0 +1,33 @@
+version: '3.9'
+
+networks:
+  backend:
+
+volumes:
+  data:
+
+services:
+  redis:
+    image: redis:7.0.0-alpine3.15
+
+  main_app:
+    build: .
+    networks:
+      - backend
+    ports:
+      - '8000:8000'
+    entrypoint: gunicorn -b 0.0.0.0:8000 main:app
+    volumes:
+      - data:/upscaled_files
+    depends_on:
+      - redis
+
+  celery:
+    build: .
+    entrypoint: celery -A celery_flask_app.celery_ worker -c 2
+    volumes:
+      - data:/upscaled_files
+    networks:
+      - backend
+    depends_on:
+      - redis
